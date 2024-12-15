@@ -1,8 +1,6 @@
 import { Request, Response } from "express";
 import { getIO } from "../libs/socket";
-
 import AppError from "../errors/AppError";
-
 import CreateService from "../services/TagServices/CreateService";
 import ListService from "../services/TagServices/ListService";
 import UpdateService from "../services/TagServices/UpdateService";
@@ -39,7 +37,8 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     name,
     color,
     companyId,
-    kanban
+    kanban,
+    addedAt: new Date()  // Registrando horário de adição
   });
 
   const io = getIO();
@@ -56,7 +55,7 @@ export const kanban = async (req: Request, res: Response): Promise<Response> => 
 
   const tags = await KanbanListService({ companyId });
 
-  return res.json({lista:tags});
+  return res.json({ lista: tags });
 };
 
 export const show = async (req: Request, res: Response): Promise<Response> => {
@@ -81,48 +80,4 @@ export const update = async (
   const tag = await UpdateService({ tagData, id: tagId });
 
   const io = getIO();
-  io.to(`company-${req.user.companyId}-mainchannel`).emit("tag", {
-    action: "update",
-    tag
-  });
-
-  return res.status(200).json(tag);
-};
-
-export const remove = async (
-  req: Request,
-  res: Response
-): Promise<Response> => {
-  const { tagId } = req.params;
-
-  await DeleteService(tagId);
-
-  const io = getIO();
-  io.to(`company-${req.user.companyId}-mainchannel`).emit("tag", {
-    action: "delete",
-    tagId
-  });
-
-  return res.status(200).json({ message: "Tag deleted" });
-};
-
-export const list = async (req: Request, res: Response): Promise<Response> => {
-  const { searchParam } = req.query as IndexQuery;
-  const { companyId } = req.user;
-
-  const tags = await SimpleListService({ searchParam, companyId });
-
-  return res.json(tags);
-};
-
-export const syncTags = async (
-  req: Request,
-  res: Response
-): Promise<Response> => {
-  const data = req.body;
-  const { companyId } = req.user;
-
-  const tags = await SyncTagService({ ...data, companyId });
-
-  return res.json(tags);
-};
+  io.to(`company-${req
