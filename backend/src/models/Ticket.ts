@@ -116,7 +116,7 @@ class Ticket extends Model<Ticket> {
   static setUUID(ticket: Ticket) {
     ticket.uuid = uuidv4();
   }
-  
+
   @Default(false)
   @Column
   useIntegration: boolean;
@@ -133,7 +133,7 @@ class Ticket extends Model<Ticket> {
 
   @Default(false)
   @Column
-  typebotStatus: boolean
+  typebotStatus: boolean;
 
   @ForeignKey(() => Prompt)
   @Column
@@ -149,6 +149,10 @@ class Ticket extends Model<Ticket> {
   @Default(0)
   @Column
   amountUsedBotQueues: number;
+
+  // Adicionar campos de horário de início e término do ticket
+  @Column
+  closedAt: Date;
 }
 
 export default Ticket;
