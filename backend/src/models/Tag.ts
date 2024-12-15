@@ -49,6 +49,13 @@ class Tag extends Model<Tag> {
 
   @Column
   kanban: number;
+
+  // Adicionando colunas para armazenar os horários de adição e remoção
+  @Column
+  addedAt: Date;
+
+  @Column
+  removedAt: Date;
 }
 
 export default Tag;
