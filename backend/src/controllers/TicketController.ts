@@ -80,9 +80,8 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
     queueIds,
     withUnreadMessages,
     companyId,
-
-
   });
+
   return res.status(200).json({ tickets, count, hasMore });
 };
 
@@ -96,7 +95,8 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     userId,
     companyId,
     queueId,
-    whatsappId
+    whatsappId,
+    createdAt: new Date()  // Registrando horário de criação
   });
 
   const io = getIO();
@@ -120,7 +120,6 @@ export const kanban = async (req: Request, res: Response): Promise<Response> => 
     users: userIdsStringified,
     withUnreadMessages
   } = req.query as IndexQuery;
-
 
   const userId = req.user.id;
   const { companyId } = req.user;
@@ -154,7 +153,6 @@ export const kanban = async (req: Request, res: Response): Promise<Response> => 
     queueIds,
     withUnreadMessages,
     companyId
-
   });
 
   return res.status(200).json({ tickets, count, hasMore });
@@ -169,92 +167,4 @@ export const show = async (req: Request, res: Response): Promise<Response> => {
 };
 
 export const showFromUUID = async (
-  req: Request,
-  res: Response
-): Promise<Response> => {
-  const { uuid } = req.params;
-
-  const ticket: Ticket = await ShowTicketUUIDService(uuid);
-
-  return res.status(200).json(ticket);
-};
-
-export const update = async (
-  req: Request,
-  res: Response
-): Promise<Response> => {
-  const { ticketId } = req.params;
-  const ticketData: TicketData = req.body;
-  const { companyId } = req.user;
-
-  const { ticket } = await UpdateTicketService({
-    ticketData,
-    ticketId,
-    companyId
-  });
-
-
-  return res.status(200).json(ticket);
-};
-
-export const remove = async (
-  req: Request,
-  res: Response
-): Promise<Response> => {
-  const { ticketId } = req.params;
-  const { companyId } = req.user;
-
-  await ShowTicketService(ticketId, companyId);
-
-  const ticket = await DeleteTicketService(ticketId);
-
-  const io = getIO();
-  io.to(ticketId)
-    .to(`company-${companyId}-${ticket.status}`)
-    .to(`company-${companyId}-notification`)
-    .to(`queue-${ticket.queueId}-${ticket.status}`)
-    .to(`queue-${ticket.queueId}-notification`)
-    .emit(`company-${companyId}-ticket`, {
-      action: "delete",
-      ticketId: +ticketId
-    });
-
-  return res.status(200).json({ message: "ticket deleted" });
-};
-
-export const closeAll = async (req: Request, res: Response): Promise<Response> => {
-  const { companyId } = req.user;
-  const { status }: TicketData = req.body;
-  const io = getIO();
-
-  const { rows: tickets } = await Ticket.findAndCountAll({
-    where: { companyId: companyId, status: status },
-    order: [["updatedAt", "DESC"]]
-  });
-
-  tickets.forEach(async ticket => {
-
-    await ticket.update({
-      status: "closed",
-      useIntegration: false,
-      promptId: null,
-      integrationId: null,
-      unreadMessages: 0
-    })
-
-    const io = getIO();
-    io.to(`${ticket.id}`)
-      .to(`company-${companyId}-${ticket.status}`)
-      .to(`company-${companyId}-notification`)
-      .to(`queue-${ticket.queueId}-${ticket.status}`)
-      .to(`queue-${ticket.queueId}-notification`)
-      .emit(`company-${companyId}-ticket`, {
-        action: "delete",
-        ticketId: ticket.id
-      });
-
-  });
-
-  return res.status(200).json();
-};
-
+  req: Request
